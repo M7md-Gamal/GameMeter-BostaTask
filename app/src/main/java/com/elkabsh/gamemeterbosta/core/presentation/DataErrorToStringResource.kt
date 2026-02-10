@@ -13,6 +13,7 @@ fun DataError.toUiText(): UiText {
         DataError.Remote.SERVER -> R.string.error_unknown
         DataError.Remote.SERIALIZATION -> R.string.error_serialization
         DataError.Remote.UNKNOWN -> R.string.error_unknown
+        DataError.Unknown -> R.string.error_unknown
     }
     return UiText.StringResourceId(stringRes)
 }

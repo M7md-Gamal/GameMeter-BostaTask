@@ -1,8 +1,10 @@
 package com.elkabsh.gamemeterbosta.core.data.remote
 
 import android.util.Log
+import com.elkabsh.gamemeterbosta.BuildConfig
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.HttpClientEngine
+import io.ktor.client.plugins.DefaultRequest
 import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.defaultRequest
@@ -15,11 +17,15 @@ import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
 
 object HttpClientFactory {
-
     fun create(
         engine: HttpClientEngine,
     ): HttpClient {
         return HttpClient(engine) {
+            install(DefaultRequest) {
+                url {
+                    parameters.append("key", BuildConfig.API_KEY )
+                }
+            }
             install(ContentNegotiation) {
                 json(
                     json = Json {

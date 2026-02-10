@@ -14,4 +14,5 @@ sealed interface DataError : Error {
         DISK_FULL,
         UNKNOWN
     }
+    data object Unknown : DataError
 }
