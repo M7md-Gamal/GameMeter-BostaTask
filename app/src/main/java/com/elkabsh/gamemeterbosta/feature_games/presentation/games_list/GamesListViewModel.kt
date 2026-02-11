@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.cachedIn
 import com.elkabsh.gamemeterbosta.feature_games.domain.repo.GamesRepo
+import com.elkabsh.gamemeterbosta.feature_games.presentation.games_list.GamesListUIEvent.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -36,9 +37,11 @@ class GamesListViewModel(
             }
             is GamesListAction.NavigateToDetails -> {
                 viewModelScope.launch {
-                    _uiEvents.send(GamesListUIEvent.NavigateToDetails(action.gameId))
+                    _uiEvents.send(NavigateToDetails(action.gameId))
                 }
             }
+
+            GamesListAction.Retry -> loadGames()
         }
     }
 

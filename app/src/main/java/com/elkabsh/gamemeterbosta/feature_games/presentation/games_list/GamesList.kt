@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
@@ -23,7 +24,6 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.LoadState
 import androidx.paging.compose.collectAsLazyPagingItems
-import androidx.paging.compose.itemContentType
 import androidx.paging.compose.itemKey
 import com.elkabsh.gamemeterbosta.feature_games.domain.model.GamesCategory
 import com.elkabsh.gamemeterbosta.feature_games.presentation.games_list.components.CategoryChips
@@ -51,27 +51,27 @@ fun GamesListScreen(viewModel: GamesListViewModel = koinViewModel(), onNavigate:
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun GamesListContent(
-        state: GamesListState,
-        onAction: (GamesListAction) -> Unit,
+    state: GamesListState,
+    onAction: (GamesListAction) -> Unit,
 ) {
     Column(modifier = Modifier.fillMaxSize()) {
         Surface(
-                color = MaterialTheme.colorScheme.background.copy(alpha = 0.95f),
-                shadowElevation = 2.dp
+            color = MaterialTheme.colorScheme.background.copy(alpha = 0.95f),
+            shadowElevation = 2.dp
         ) {
             Column {
                 DiscoverHeader()
 
                 SearchBar(
-                        query = state.searchQuery,
-                        onQueryChange = { onAction(GamesListAction.UpdateSearchQuery(it)) },
-                        modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp)
+                    query = state.searchQuery,
+                    onQueryChange = { onAction(GamesListAction.UpdateSearchQuery(it)) },
+                    modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp)
                 )
 
                 CategoryChips(
-                        categories = GamesCategory.entries,
-                        selectedCategory = state.selectedCategory,
-                        onCategorySelected = { onAction(GamesListAction.SelectCategory(it)) }
+                    categories = GamesCategory.entries,
+                    selectedCategory = state.selectedCategory,
+                    onCategorySelected = { onAction(GamesListAction.SelectCategory(it)) }
                 )
             }
         }
@@ -84,29 +84,28 @@ fun GamesListContent(
             } else if (games.loadState.refresh is LoadState.Error) {
                 val error = (games.loadState.refresh as LoadState.Error).error
                 ErrorItem(
-                        message = error.localizedMessage ?: "Unknown error occurred",
-                        modifier = Modifier.fillMaxSize(),
-                        onRetry = { games.retry() }
+                    message = error.localizedMessage ?: "Unknown error occurred",
+                    modifier = Modifier.fillMaxSize(),
+                    onRetry = { games.retry() }
                 )
             } else {
                 LazyColumn(
-                        modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(horizontal = 20.dp, vertical = 16.dp),
-                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(horizontal = 20.dp, vertical = 16.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     items(
-                            count = games.itemCount,
-                            key = games.itemKey { it.id },
-                            contentType = games.itemContentType { "game" }
+                        count = games.itemCount,
+                        key = games.itemKey { it.id },
                     ) { index ->
                         val game = games[index]
                         if (game != null) {
                             GameCard(
-                                    game = game,
-                                    gamesCategory = state.selectedCategory,
-                                    onDetailsClick = {
-                                        onAction(GamesListAction.NavigateToDetails(game.id))
-                                    }
+                                game = game,
+                                gamesCategory = state.selectedCategory,
+                                onDetailsClick = {
+                                    onAction(GamesListAction.NavigateToDetails(game.id))
+                                }
                             )
                         }
                     }
@@ -115,29 +114,42 @@ fun GamesListContent(
                         is LoadState.Loading -> {
                             item {
                                 Box(
-                                        modifier = Modifier.fillMaxWidth().padding(16.dp),
-                                        contentAlignment = Alignment.Center
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(16.dp),
+                                    contentAlignment = Alignment.Center
                                 ) { CircularProgressIndicator() }
                             }
                         }
+
                         is LoadState.Error -> {
                             item {
                                 ErrorItem(
-                                        message = appendState.error.localizedMessage
-                                                        ?: "Error loading more games",
-                                        modifier = Modifier.fillMaxWidth(),
-                                        onRetry = { games.retry() }
+                                    message = appendState.error.localizedMessage
+                                        ?: "Error loading more games",
+                                    modifier = Modifier.fillMaxWidth(),
+                                    onRetry = { games.retry() }
                                 )
                             }
                         }
+
                         else -> {}
                     }
                 }
 
                 // Show empty state if list is truly empty and not loading
                 if (games.itemCount == 0 && games.loadState.refresh is LoadState.NotLoading) {
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Column(
+                        modifier = Modifier.fillMaxSize(),
+                        verticalArrangement = Arrangement.spacedBy(16.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
                         Text("No games found")
+                        Button(
+                            onClick = { onAction(GamesListAction.Retry) },
+                        ) {
+                            Text("Try again")
+                        }
                     }
                 }
             }

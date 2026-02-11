@@ -80,9 +80,9 @@ class GamesRepoImpl(
                 if (game != null && details != null) {
                     Result.Success(combineToGameDetail(game, details))
                 } else {
-                    Result.Error(DataError.Local.UNKNOWN)
+                    Result.Error(DataError.Remote.NO_INTERNET)
                 }
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 Result.Error(DataError.Local.UNKNOWN)
             }
         }
@@ -110,7 +110,7 @@ class GamesRepoImpl(
                                     )
                                 )
                             Result.Success(Unit)
-                        } catch (e: Exception) {
+                        } catch (_: Exception) {
                             Result.Error(DataError.Local.UNKNOWN)
                         }
                     }
@@ -119,7 +119,7 @@ class GamesRepoImpl(
                     screenshotsResult is Result.Error -> screenshotsResult
                     else -> Result.Error(DataError.Remote.UNKNOWN)
                 }
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 Result.Error(DataError.Remote.UNKNOWN)
             }
         }

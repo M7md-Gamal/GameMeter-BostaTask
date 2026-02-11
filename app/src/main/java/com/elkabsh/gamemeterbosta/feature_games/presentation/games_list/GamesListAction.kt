@@ -6,6 +6,7 @@ sealed interface GamesListAction {
     data class UpdateSearchQuery(val query: String) : GamesListAction
     data class SelectCategory(val category: GamesCategory) : GamesListAction
     data class NavigateToDetails(val gameId: Int) : GamesListAction
+    object Retry : GamesListAction
 }
 
 sealed class GamesListUIEvent {

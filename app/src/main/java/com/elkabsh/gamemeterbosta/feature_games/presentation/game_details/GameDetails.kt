@@ -1,11 +1,15 @@
 package com.elkabsh.gamemeterbosta.feature_games.presentation.game_details
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -27,19 +31,20 @@ import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
 fun GameDetailsScreen(
-    viewModel: GameDetailsViewModel = koinViewModel(), onNavigateBack: () -> Unit = {}
+    viewModel: GameDetailsViewModel = koinViewModel(),
+    onNavigateBack: () -> Unit
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     LaunchedEffect(true) {
         viewModel.uiEvents.collect { event ->
             when (event) {
-                else -> {}
+                GameDetailsUIEvent.NavigateBack -> onNavigateBack()
             }
         }
     }
 
     GameDetailsContent(
-        state = state, onAction = viewModel::onAction, onNavigateBack = onNavigateBack
+        state = state, onAction = viewModel::onAction,
     )
 }
 
@@ -47,7 +52,6 @@ fun GameDetailsScreen(
 fun GameDetailsContent(
     state: GameDetailsState,
     onAction: (GameDetailsAction) -> Unit,
-    onNavigateBack: () -> Unit = {}
 ) {
     Surface(
         modifier = Modifier.fillMaxSize()
@@ -57,12 +61,21 @@ fun GameDetailsContent(
                 CircularProgressIndicator()
             }
         } else if (state.error != null) {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Column(
+                modifier = Modifier.fillMaxSize(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
                 Text(
                     text = state.error.asString(),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.error
                 )
+                Button(
+                    onClick = { onAction(GameDetailsAction.OnRetry) },
+                ) {
+                    Text("Try again")
+                }
             }
         } else {
             Column(
@@ -70,29 +83,26 @@ fun GameDetailsContent(
                     .fillMaxSize()
                     .verticalScroll(rememberScrollState()),
             ) {
-                // Hero Image Section
                 HeroImageSection(
                     gameName = state.gameName,
                     gameImgUrl = state.gameImg,
-                    onNavigateBack = onNavigateBack
+                    onNavigateBack = { onAction(GameDetailsAction.OnBackClicked) }
                 )
-                // Game Info Section
                 GameInfoSection(
                     gameRating = state.gameRating,
                     gameReleaseDate = state.gameReleaseDate,
                     gameGenre = state.gameGenre,
                     modifier = Modifier.padding(24.dp)
                 )
-                // About Section
                 AboutSection(
                     description = state.gameDescription,
                     modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp)
                 )
-                // Gallery Section
                 GallerySection(
                     gameScreenShots = state.gameScreenshots,
                     modifier = Modifier.padding(vertical = 16.dp)
                 )
+                Spacer(modifier = Modifier.height(64.dp))
             }
 
         }

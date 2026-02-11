@@ -30,7 +30,13 @@ class GameDetailsViewModel(
 
     fun onAction(action: GameDetailsAction) {
         when (action) {
-            else -> TODO("Handle actions")
+            GameDetailsAction.OnBackClicked -> {
+                viewModelScope.launch {
+                    _uiEvents.send(GameDetailsUIEvent.NavigateBack)
+                }
+            }
+
+            GameDetailsAction.OnRetry -> loadGameDetails()
         }
     }
 
