@@ -1,14 +1,16 @@
 package com.elkabsh.gamemeterbosta.core.data.remote
 
-import com.elkabsh.gamemeterbosta.core.domain.errors.DataError
 import com.elkabsh.gamemeterbosta.core.domain.Result
+import com.elkabsh.gamemeterbosta.core.domain.errors.DataError
 import io.ktor.client.call.NoTransformationFoundException
 import io.ktor.client.call.body
 import io.ktor.client.network.sockets.SocketTimeoutException
 import io.ktor.client.statement.HttpResponse
-import io.ktor.util.network.UnresolvedAddressException
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
+import kotlinx.io.IOException
+import java.net.ConnectException
+import java.net.UnknownHostException
 
 suspend inline fun <reified T> safeCall(
     execute: () -> HttpResponse
@@ -17,7 +19,11 @@ suspend inline fun <reified T> safeCall(
         execute()
     } catch (_: SocketTimeoutException) {
         return Result.Error(DataError.Remote.REQUEST_TIMEOUT)
-    } catch (_: UnresolvedAddressException) {
+    } catch (_: UnknownHostException) {
+        return Result.Error(DataError.Remote.NO_INTERNET)
+    } catch (_: ConnectException) {
+        return Result.Error(DataError.Remote.NO_INTERNET)
+    } catch (_: IOException) {
         return Result.Error(DataError.Remote.NO_INTERNET)
     } catch (_: Exception) {
         currentCoroutineContext().ensureActive()

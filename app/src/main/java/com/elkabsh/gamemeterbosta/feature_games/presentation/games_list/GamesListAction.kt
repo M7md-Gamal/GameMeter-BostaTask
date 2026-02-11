@@ -7,6 +7,7 @@ sealed interface GamesListAction {
     data class SelectCategory(val category: GamesCategory) : GamesListAction
     data class NavigateToDetails(val gameId: Int) : GamesListAction
     object Retry : GamesListAction
+    object DismissError : GamesListAction
 }
 
 sealed class GamesListUIEvent {

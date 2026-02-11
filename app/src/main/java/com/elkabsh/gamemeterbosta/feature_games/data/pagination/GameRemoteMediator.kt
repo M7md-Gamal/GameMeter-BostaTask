@@ -1,6 +1,5 @@
 package com.elkabsh.gamemeterbosta.feature_games.data.pagination
 
-import android.util.Log
 import androidx.paging.ExperimentalPagingApi
 import androidx.paging.LoadType
 import androidx.paging.PagingState
@@ -22,7 +21,7 @@ import kotlinx.coroutines.withContext
 class GameRemoteMediator(
     private val gameApi: RemoteGameDataSource,
     private val gameDatabase: GamesDB,
-    private val category: GamesCategory? = null // Add genre filter parameter
+    private val category: GamesCategory? = null
 ) : RemoteMediator<Int, GameEntity>() {
 
     private val gameDao = gameDatabase.gameDao()
@@ -34,20 +33,13 @@ class GameRemoteMediator(
     ): MediatorResult {
         return withContext(Dispatchers.IO) {
             try {
-                Log.d(
-                    "RemoteMediator",
-                    "Load called - Type: $loadType, Category: ${category?.toGenre()}"
-                )
-
                 val page =
                     when (loadType) {
                         LoadType.REFRESH -> {
-                            Log.d("RemoteMediator", "REFRESH - Starting from page 1")
                             1
                         }
 
                         LoadType.PREPEND -> {
-                            Log.d("RemoteMediator", "PREPEND - Returning early")
                             return@withContext MediatorResult.Success(
                                 endOfPaginationReached = true
                             )
@@ -60,15 +52,9 @@ class GameRemoteMediator(
                                     ?: return@withContext MediatorResult.Success(
                                         endOfPaginationReached = remoteKeys != null
                                     )
-                            Log.d("RemoteMediator", "APPEND - Loading page $nextPage")
                             nextPage
                         }
                     }
-
-                Log.d(
-                    "RemoteMediator",
-                    "Fetching page $page with pageSize ${state.config.pageSize}"
-                )
 
                 val result =
                     gameApi.loadListOfGames(
@@ -83,21 +69,14 @@ class GameRemoteMediator(
                         val games = response.results
                         val endOfPaginationReached = games.isEmpty()
 
-                        Log.d(
-                            "RemoteMediator",
-                            "Received ${games.size} games, endOfPagination: $endOfPaginationReached"
-                        )
-
                         val safeCategory = category?.toGenre() ?: ""
 
                         gameDatabase.withTransaction {
                             if (loadType == LoadType.REFRESH) {
                                 if (category != null) {
-                                    Log.d("RemoteMediator", "Clearing category: $safeCategory")
                                     remoteKeysDao.clearRemoteKeysByCategory(safeCategory)
                                     gameDao.clearGamesByCategory(safeCategory)
                                 } else {
-                                    Log.d("RemoteMediator", "Clearing all games")
                                     remoteKeysDao.clearRemoteKeys()
                                     gameDao.clearGames()
                                 }
@@ -115,11 +94,6 @@ class GameRemoteMediator(
                                         nextPage = nextPage
                                     )
                                 }
-
-                            Log.d(
-                                "RemoteMediator",
-                                "Inserting ${keys.size} remote keys and ${games.size} games"
-                            )
                             remoteKeysDao.insertRemoteKeys(keys)
                             gameDao.insertGames(games.map { it.toGameEntity() })
                         }
@@ -128,53 +102,12 @@ class GameRemoteMediator(
                     }
 
                     is Result.Error -> {
-                        Log.e("RemoteMediator", "Error loading games: ${result.error}")
-
-                        // ✅ KEY FIX: Return success on network errors during REFRESH
-                        // This allows PagingSource to show cached data
-                        when {
-                            loadType == LoadType.REFRESH && isNetworkError(result.error) -> {
-                                Log.d(
-                                    "RemoteMediator",
-                                    "Network error during REFRESH - using cached data"
-                                )
-                                MediatorResult.Success(endOfPaginationReached = true)
-                            }
-
-                            loadType == LoadType.APPEND && isNetworkError(result.error) -> {
-                                Log.d(
-                                    "RemoteMediator",
-                                    "Network error during APPEND - stopping pagination"
-                                )
-                                MediatorResult.Success(endOfPaginationReached = true)
-                            }
-
-                            else -> {
-                                MediatorResult.Error(DataErrorException(result.error))
-                            }
-                        }
+                        MediatorResult.Error(DataErrorException(result.error))
                     }
                 }
             } catch (e: Exception) {
-                Log.e("RemoteMediator", "Exception in load", e)
-
-                // ✅ Also handle exceptions during REFRESH gracefully
-                if (loadType == LoadType.REFRESH) {
-                    Log.d("RemoteMediator", "Exception during REFRESH - using cached data")
-                    MediatorResult.Success(endOfPaginationReached = true)
-                } else {
-                    MediatorResult.Error(e)
-                }
+                MediatorResult.Error(e)
             }
-        }
-    }
-
-    // Helper function to identify network errors
-    private fun isNetworkError(error: DataError): Boolean {
-        return when (error) {
-            is DataError.Remote -> true
-            DataError.Unknown -> true // Treat UNKNOWN as potential network error
-            else -> false
         }
     }
 

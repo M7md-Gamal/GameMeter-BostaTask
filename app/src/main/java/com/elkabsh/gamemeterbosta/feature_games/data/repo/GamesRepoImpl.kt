@@ -26,61 +26,62 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 
 class GamesRepoImpl(
-    private val remoteDataSource: RemoteGameDataSource,
-    private val gameDatabase: GamesDB
+    private val remoteDataSource: RemoteGameDataSource, private val gameDatabase: GamesDB
 ) : GamesRepo {
     @OptIn(ExperimentalPagingApi::class)
     override fun getGamesByGenrePaged(
-        category: GamesCategory,
-        query: String
+        category: GamesCategory, query: String
     ): Flow<PagingData<GameListItem>> {
-        val remoteMediator =
-            if (query.isBlank()) {
-                GameRemoteMediator(
-                    gameApi = remoteDataSource,
-                    gameDatabase = gameDatabase,
-                    category = category
-                )
-            } else {
-                null
-            }
+
+        //for fetching only the local stored games on search
+        val remoteMediator = if (query.isBlank()) {
+            GameRemoteMediator(
+                gameApi = remoteDataSource, gameDatabase = gameDatabase, category = category
+            )
+        } else {
+            null
+        }
 
         return Pager(
-            config =
-                PagingConfig(
-                    pageSize = 20,
-                    enablePlaceholders = false,
-                    prefetchDistance = 5
-                ),
+            config = PagingConfig(
+                pageSize = 20,
+                enablePlaceholders = false,
+                prefetchDistance = 5
+            ),
             remoteMediator = remoteMediator,
             pagingSourceFactory = {
-                gameDatabase
-                    .gameDao()
-                    .getGamesByCategoryPaged(category.toGenre(), query)
+                gameDatabase.gameDao()
+                    .getGamesByCategoryPaged(
+                        category.toGenre(),
+                        query
+                    )
             }
-        )
-            .flow
-            .map { pagingData -> pagingData.map { gameEntity -> gameEntity.toGameListItem() } }
+        ).flow.map { pagingData ->
+            pagingData.map { gameEntity ->
+                gameEntity.toGameListItem()
+            }
+        }
     }
 
     override suspend fun getSingleGame(id: Int): Result<GameDetailItem, DataError> =
         withContext(Dispatchers.IO) {
             try {
-                var details = gameDatabase.gameDetailsDao().getGameDetails(id)
                 var game = gameDatabase.gameDao().getGameById(id)
+                var details = gameDatabase.gameDetailsDao().getGameDetails(id)
 
                 if (details == null) {
                     val fetchResult = fetchGameDetails(id)
                     if (fetchResult is Result.Error) {
-                        return@withContext fetchResult
+                        return@withContext Result.Error(fetchResult.error)
                     }
-                    details = gameDatabase.gameDetailsDao().getGameDetails(id)
                     game = gameDatabase.gameDao().getGameById(id)
+                    details = gameDatabase.gameDetailsDao().getGameDetails(id)
                 }
+
                 if (game != null && details != null) {
                     Result.Success(combineToGameDetail(game, details))
                 } else {
-                    Result.Error(DataError.Remote.NO_INTERNET)
+                    Result.Error(DataError.Remote.UNKNOWN)
                 }
             } catch (_: Exception) {
                 Result.Error(DataError.Local.UNKNOWN)
@@ -97,18 +98,13 @@ class GamesRepoImpl(
                 val screenshotsResult = screenshotsDeferred.await()
 
                 when {
-                    descriptionResult is Result.Success &&
-                            screenshotsResult is Result.Success -> {
+                    descriptionResult is Result.Success && screenshotsResult is Result.Success -> {
                         try {
-                            gameDatabase
-                                .gameDetailsDao()
-                                .insertGameDetails(
-                                    createGameDetailsEntityFromDTOs(
-                                        gameId,
-                                        screenshotsResult.data,
-                                        descriptionResult.data
-                                    )
+                            gameDatabase.gameDetailsDao().insertGameDetails(
+                                createGameDetailsEntityFromDTOs(
+                                    gameId, screenshotsResult.data, descriptionResult.data
                                 )
+                            )
                             Result.Success(Unit)
                         } catch (_: Exception) {
                             Result.Error(DataError.Local.UNKNOWN)
@@ -120,7 +116,7 @@ class GamesRepoImpl(
                     else -> Result.Error(DataError.Remote.UNKNOWN)
                 }
             } catch (_: Exception) {
-                Result.Error(DataError.Remote.UNKNOWN)
+                Result.Error(DataError.Unknown)
             }
         }
 }

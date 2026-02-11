@@ -11,6 +11,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.BrokenImage
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -23,7 +25,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import coil3.compose.AsyncImage
+import coil3.compose.SubcomposeAsyncImage
 
 @Composable
 fun HeroImageSection(
@@ -37,11 +39,28 @@ fun HeroImageSection(
             .height(320.dp)
     ) {
         // Background Image
-        AsyncImage(
+        SubcomposeAsyncImage(
             model = gameImgUrl,
             contentDescription = gameName,
             contentScale = ContentScale.Crop,
-            modifier = Modifier.fillMaxSize()
+            modifier = Modifier.fillMaxSize(),
+            loading = {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(48.dp),
+                        strokeWidth = 2.dp
+                    )
+                }
+            },
+            error = {
+                Icon(
+                    imageVector = Icons.Default.BrokenImage,
+                    contentDescription = null
+                )
+            }
         )
 
         // Gradient Overlay
@@ -51,8 +70,8 @@ fun HeroImageSection(
                 .background(
                     Brush.verticalGradient(
                         colorStops = arrayOf(
-                            0.0f to Color.Transparent,     // top: untouched
-                            0.7f to Color.Transparent,     // still clean
+                            0.0f to Color.Transparent,
+                            0.7f to Color.Transparent,
                             1.0f to MaterialTheme.colorScheme.background
                         )
                     )

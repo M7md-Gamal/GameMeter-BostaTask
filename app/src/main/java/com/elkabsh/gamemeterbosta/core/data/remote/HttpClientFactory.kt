@@ -43,7 +43,7 @@ object HttpClientFactory {
                         Log.d("KTOR_HTTP_LOG", message)
                     }
                 }
-                level = LogLevel.ALL
+                level = LogLevel.INFO
             }
 
             defaultRequest {

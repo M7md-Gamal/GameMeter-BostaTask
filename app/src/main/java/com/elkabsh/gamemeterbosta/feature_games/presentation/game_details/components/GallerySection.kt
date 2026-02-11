@@ -1,16 +1,23 @@
 package com.elkabsh.gamemeterbosta.feature_games.presentation.game_details.components
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.BrokenImage
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -20,7 +27,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import coil3.compose.AsyncImage
+import coil3.compose.SubcomposeAsyncImage
 
 @Composable
 fun GallerySection(
@@ -56,10 +63,27 @@ fun GallerySection(
                 horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 items(gameScreenShots) {
-                    AsyncImage(
+                    SubcomposeAsyncImage(
                         model = it,
                         contentDescription = "Gallery image",
                         contentScale = ContentScale.Crop,
+                        loading = {
+                            Box(
+                                modifier = Modifier.fillMaxSize(),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(48.dp),
+                                    strokeWidth = 2.dp
+                                )
+                            }
+                        },
+                        error = {
+                            Icon(
+                                imageVector = Icons.Default.BrokenImage,
+                                contentDescription = null
+                            )
+                        },
                         modifier = Modifier
                             .width(240.dp)
                             .height(144.dp)
